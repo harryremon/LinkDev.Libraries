@@ -23,6 +23,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -7568,7 +7569,40 @@ namespace LinkDev.Libraries.Common
         /// <param name="userName">Username to access the service</param>
         /// <param name="password">Password to access the service</param>
         /// <returns></returns>
-        public TChannelInterface GetIntegrationClient<TChannelInterface>(string endpointAddress, string userName = null, string password = null)
+        public TChannelInterface GetIntegrationClient<TChannelInterface>(string endpointAddress,
+            string userName = null, string password = null, BindingType bindingType = BindingType.BasicHttpBinding)
+        {
+            var httpBinding = BuildBinding(userName, bindingType);
+            var endPointAddress = new EndpointAddress(endpointAddress);
+            var endpointFactory = new ChannelFactory<TChannelInterface>(httpBinding, endPointAddress);
+            PostCreation(userName, password, endpointFactory);
+            var channel = endpointFactory.CreateChannel();
+            return channel;
+        }
+
+        public virtual void PostCreation<TChannelInterface>(string userName, string password, ChannelFactory<TChannelInterface> endpointFactory)
+        {
+            if (string.IsNullOrWhiteSpace(userName)) return;
+            endpointFactory.Credentials.UserName.UserName = userName;
+            endpointFactory.Credentials.UserName.Password = password;
+        }
+
+        public virtual Binding BuildBinding(string userName = null, BindingType bindingType = BindingType.BasicHttpBinding)
+        {
+            switch (bindingType)
+            {
+                case BindingType.BasicHttpBinding:
+                    return BasicBindingBuilder(userName);
+                case BindingType.BasicHttpsBinding:
+                    return BasicHttpsBindingBuilder(userName);
+                case BindingType.wsHttpBinding:
+                    return wsBindingBuilder(userName);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(bindingType), bindingType, null);
+            }
+        }
+
+        public virtual Binding BasicBindingBuilder(string userName = null)
         {
             var basicHttpBinding = new BasicHttpBinding
             {
@@ -7583,22 +7617,59 @@ namespace LinkDev.Libraries.Common
                     Message = {ClientCredentialType = BasicHttpMessageCredentialType.UserName}
                 }
             };
-
             basicHttpBinding.Security.Transport.ClientCredentialType = string.IsNullOrWhiteSpace(userName)
                 ? HttpClientCredentialType.None
                 : HttpClientCredentialType.Basic;
+            return basicHttpBinding;
+        }
 
-            var endPointAddress = new EndpointAddress(endpointAddress);
-            var endpointFactory = new ChannelFactory<TChannelInterface>(basicHttpBinding, endPointAddress);
-
-            if (!string.IsNullOrWhiteSpace(userName))
+        public virtual Binding BasicHttpsBindingBuilder(string userName = null)
+        {
+            var basicHttpsBinding = new BasicHttpsBinding
             {
-                endpointFactory.Credentials.UserName.UserName = userName;
-                endpointFactory.Credentials.UserName.Password = password;
-            }
+                Name = "BasicHttpsBinding",
+                Security =
+                {
+                    Mode = BasicHttpsSecurityMode.Transport,
+                    Transport =
+                    {
+                        ProxyCredentialType = HttpProxyCredentialType.Basic
+                    },
+                    Message = {ClientCredentialType = BasicHttpMessageCredentialType.UserName}
+                }
+            };
+            basicHttpsBinding.Security.Transport.ClientCredentialType = string.IsNullOrWhiteSpace(userName)
+                ? HttpClientCredentialType.None
+                : HttpClientCredentialType.Basic;
+            return basicHttpsBinding;
+        }
 
-            var channel = endpointFactory.CreateChannel();
-            return channel;
+        public virtual Binding wsBindingBuilder(string userName = null)
+        {
+            var wsBinding = new WSHttpBinding()
+            {
+                Name = "BasicHttpsBinding",
+                Security =
+                {
+                    Mode = SecurityMode.None,
+                    Transport =
+                    {
+                        ProxyCredentialType = HttpProxyCredentialType.Basic
+                    },
+                    Message = {ClientCredentialType = MessageCredentialType.UserName}
+                }
+            };
+            wsBinding.Security.Transport.ClientCredentialType = string.IsNullOrWhiteSpace(userName)
+                ? HttpClientCredentialType.None
+                : HttpClientCredentialType.Basic;
+            return wsBinding;
+        }
+
+        public enum BindingType
+        {
+            BasicHttpBinding,
+            BasicHttpsBinding,
+            wsHttpBinding
         }
     }
     #endregion
