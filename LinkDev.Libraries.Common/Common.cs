@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
+using System.ServiceModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -7548,5 +7549,44 @@ namespace LinkDev.Libraries.Common
 		}
 	}
 
-	#endregion
+    #endregion
+
+    #region Integration Helpers
+
+    /// <inheritdoc />
+    /// <summary>
+    /// Author:Remon Kamel
+    /// Inherits from StepLogic, adds integration related helpers
+    /// </summary>
+    public abstract class IntegrationStepLogic<TCodeActivity> : StepLogic<TCodeActivity> where TCodeActivity : CodeActivity
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="TChannelInterface">Service Channel Interface</typeparam>
+        /// <param name="endpointAddress">Url of the endpoint, against which all requests will be made.</param>
+        /// <returns></returns>
+        public TChannelInterface GetIntegrationClient<TChannelInterface>(string endpointAddress)
+        {
+            var basicHttpBinding = new BasicHttpBinding
+            {
+                Name = "BasicHttpBinding",
+                Security =
+                {
+                    Mode = BasicHttpSecurityMode.None,
+                    Transport =
+                    {
+                        ClientCredentialType = HttpClientCredentialType.None,
+                        ProxyCredentialType = HttpProxyCredentialType.None
+                    },
+                    Message = {ClientCredentialType = BasicHttpMessageCredentialType.UserName}
+                }
+            };
+            var endPointAddress = new EndpointAddress(endpointAddress);
+            var endpointFactory = new ChannelFactory<TChannelInterface>(basicHttpBinding, endPointAddress);
+            var channel = endpointFactory.CreateChannel();
+            return channel;
+        }
+    }
+    #endregion
 }
