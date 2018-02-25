@@ -7561,12 +7561,14 @@ namespace LinkDev.Libraries.Common
     public abstract class IntegrationStepLogic<TCodeActivity> : StepLogic<TCodeActivity> where TCodeActivity : CodeActivity
     {
         /// <summary>
-        /// 
+        /// Creates a channel with the specified endpoint, username and password
         /// </summary>
         /// <typeparam name="TChannelInterface">Service Channel Interface</typeparam>
         /// <param name="endpointAddress">Url of the endpoint, against which all requests will be made.</param>
+        /// <param name="userName">Username to access the service</param>
+        /// <param name="password">Password to access the service</param>
         /// <returns></returns>
-        public TChannelInterface GetIntegrationClient<TChannelInterface>(string endpointAddress)
+        public TChannelInterface GetIntegrationClient<TChannelInterface>(string endpointAddress, string userName = null, string password = null)
         {
             var basicHttpBinding = new BasicHttpBinding
             {
@@ -7576,14 +7578,25 @@ namespace LinkDev.Libraries.Common
                     Mode = BasicHttpSecurityMode.None,
                     Transport =
                     {
-                        ClientCredentialType = HttpClientCredentialType.None,
                         ProxyCredentialType = HttpProxyCredentialType.None
                     },
                     Message = {ClientCredentialType = BasicHttpMessageCredentialType.UserName}
                 }
             };
+
+            basicHttpBinding.Security.Transport.ClientCredentialType = string.IsNullOrWhiteSpace(userName)
+                ? HttpClientCredentialType.None
+                : HttpClientCredentialType.Basic;
+
             var endPointAddress = new EndpointAddress(endpointAddress);
             var endpointFactory = new ChannelFactory<TChannelInterface>(basicHttpBinding, endPointAddress);
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                endpointFactory.Credentials.UserName.UserName = userName;
+                endpointFactory.Credentials.UserName.Password = password;
+            }
+
             var channel = endpointFactory.CreateChannel();
             return channel;
         }
