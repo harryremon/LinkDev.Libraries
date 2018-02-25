@@ -1,0 +1,45 @@
+﻿<?xml version="1.0"?>
+
+<package>
+  <metadata>
+    <id>LinkDev.Libraries.EnhancedOrgService</id>
+    <version>1.2.3</version>
+    <authors>Ahmed el-Sawalhy</authors>
+    <owners>Ahmed el-Sawalhy</owners>
+    <projectUrl>http://www.yagasoft.com</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>Dynamics CRM Enhanced Organisation Service.</summary>
+    <description>Dynamics CRM Enhanced Organisation Service is an extension to the out-of-the-box IOrganizationService. It supports async operations, dependencies, transactions, and caching.</description>
+    <copyright>Copyright 2017</copyright>
+    <tags>organization, service, IOrganizationService, CrmServiceClient, CRM, Dynamics, 365, 2016</tags>
+    <developmentDependency>true</developmentDependency>
+    <dependencies>
+      <group>
+        <dependency id="Microsoft.CrmSdk.XrmTooling.CoreAssembly" version="9.0.0.7" />
+        <dependency id="LinkDev.Libraries.Common" version="1.5.3" />
+      </group>
+    </dependencies>
+    <references />
+    <releaseNotes>
+      * 1.2.3
+      Fixed: paging issue in RetrieveMultiple
+      * 1.2.2
+      Fixed: SDK caching of connections
+      * 1.2.1
+      Added: digital signature
+      * 1.2.0
+      Changed: upgraded to CRM v9
+      * 1.1.9
+      Fixed: issue with query caching
+      * 1.1.4
+      Fixed: references
+      * 1.1.2
+      Fixed: caching
+      * 1.1.1
+      Initial release
+    </releaseNotes>
+  </metadata>
+  <files>
+    <file src="bin\Release\Microsoft.Xrm.Client.dll" target="lib\net462\Microsoft.Xrm.Client.dll" />
+  </files>
+</package>
